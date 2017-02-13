@@ -1,0 +1,8 @@
+# (c) 2016 DataNexus Inc.  All Rights Reserved
+---
+- include: add-zookeeper-user.yml static=no
+- include: setup-apache-zookeeper.yml static=no
+- include: setup-zookeeper-server-properties.yml static=no
+- include: create-zookeeper-service.yml static=no
+- include: enable-zookeeper-service.yml static=no
+- include: start-zookeeper-service.yml static=no

@@ -1,0 +1,20 @@
+# (c) 2016 DataNexus Inc.  All Rights Reserved
+---
+- name: Install/configure servers (zookeeper)
+  hosts: "{{host_inventory}}"
+  vars_files:
+    - vars/zookeeper.yml
+  vars:
+    - combined_package_list: "{{ (default_packages|default([])) | union(zookeeper_package_list) | union((install_packages_by_tag|default({})).zookeeper|default([])) }}"
+  roles:
+    - role: ensure-interfaces-up
+    - role: get-iface-addr
+      iface_name: "{{zookeeper_iface}}"
+    - role: setup-web-proxy
+    - role: add-local-repository
+      yum_repository: "{{yum_repo_addr}}"
+      when: yum_repo_addr is defined
+    - role: install-packages
+      package_list: "{{combined_package_list}}"
+    - role: dn-zookeeper
+      zookeeper_addr: "{{iface_addr}}"

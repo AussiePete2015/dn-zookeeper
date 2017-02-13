@@ -1,0 +1,38 @@
+# (c) 2016 DataNexus Inc.  All Rights Reserved
+#
+# Defaults that are necessary for all deployments of
+# zookeeper
+---
+application: zookeeper
+
+# the distribution of Zookeeper that should be installed (apache, confluent, or lucidworks)
+zookeeper_distro: apache
+
+# the directory where the Zookeeper logs will be written
+zookeeper_log_dir: /var/lib
+
+# the interface Zookeeper should listen on when running
+zookeeper_iface: eth0
+
+# the user that the zookeeper service should run under
+zookeeper_user: zookeeper
+
+# the following parameters are only used when provisioning an instance
+# of the apache distribution, but are uncommented here (regardless) to
+# provide reasonable default values when provisioning via Vagrant (where
+# the distribution being provisioned may be different from the default)
+zookeeper_version: "3.4.9"
+zookeeper_url: "https://www.apache.org/dist/zookeeper/zookeeper-{{zookeeper_version}}/zookeeper-{{zookeeper_version}}.tar.gz"
+zookeeper_dir: "/opt/zookeeper"
+
+# these parameters are used for both confluent and apache distributions
+zookeeper_package_list: ["java-1.8.0-openjdk", "java-1.8.0-openjdk-devel"]
+
+# used to add extra repositories to the list of repositories in the
+# `local.repo` file that is deployed to a node when we're adding a
+# local repository to use in the provisioning process
+#local_repository_url: http://{{yum_repository}}/local.repo
+#local_repository_extra_keys: http://{{yum_repository}}/local-keys.json
+
+# used to install Zookeeper from a file in a local directory (if it exists)
+local_zk_file: ""

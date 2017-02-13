@@ -1,0 +1,52 @@
+# (c) 2016 DataNexus Inc.  All Rights Reserved
+---
+# copy sample configuration file over to new 'zoo.cfg' file
+# and configure our zookeeper instance to use the defined
+# data directory
+- block:
+  - name: Copy example configuration file to new zoo.cfg file
+    copy:
+      remote_src: true
+      src: "{{zookeeper_config_dir}}/zoo_sample.cfg"
+      dest: "{{zookeeper_config_dir}}/zoo.cfg"
+      owner: "{{zookeeper_user}}"
+      group: "{{zookeeper_user}}"
+  - name: Configure zookeeper server to use the defined data directory
+    lineinfile:
+      dest: "{{zookeeper_config_dir}}/zoo.cfg"
+      regexp: "^dataDir"
+      line: "dataDir={{data_dir_location}}/zookeeper"
+  - name: Create zookeeper working directory
+    file:
+      path: /var/lib/zookeeper
+      state: directory
+      owner: "{{zookeeper_user}}"
+      group: "{{zookeeper_user}}"
+  become: true
+# if more than one zookeeper node was passed in, then setup
+# the zookeeper nodes we're provisioning as an ensemble
+- block:
+  - name: "Configure the zookeeper cluster timeouts"
+    lineinfile:
+      dest: "{{zookeeper_config_dir}}/zoo.cfg"
+      regexp: "^{{item.key}}"
+      line: "{{item.key}}={{item.val}}"
+    with_items:
+      - { key: 'initLimit', val: '5' }
+      - { key: 'syncLimit', val: '2' }
+  - name: "Configure the zookeeper cluster addresses"
+    lineinfile:
+      dest: "{{zookeeper_config_dir}}/zoo.cfg"
+      regexp: "^server.{{item.0}}"
+      line: "server.{{item.0}}={{item.1}}:2888:3888"
+    with_indexed_items: "{{zookeeper_nodes | default([])}}"
+  - name: "Setup the 'myid' file for this zookeeper node"
+    lineinfile:
+      dest: "{{data_dir_location}}/zookeeper/myid"
+      create: yes
+      regexp: "^[0-9]"
+      line: "{{item.0}}"
+    with_indexed_items: "{{zookeeper_nodes | default([])}}"
+    when: "'{{iface_addr}}' == '{{item.1}}'"
+  become: true
+  when: (zookeeper_nodes | default([])) != []
