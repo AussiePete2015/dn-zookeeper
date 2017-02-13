@@ -162,8 +162,8 @@ if provisioning_command || ip_required
           exit 2
         end
       elsif !(VALID_ZK_ENSEMBLE_SIZES.include?(zookeeper_addr_array.size))
-        print "ERROR; only a zookeeper cluster with an odd number of elements greater than three but\n"
-        print "       less than seven is supported for multi-node zookeeper deployments; requested cluster\n"
+        print "ERROR; only a zookeeper cluster with an odd number of elements between three and\n"
+        print "       seven is supported for multi-node zookeeper deployments; requested cluster\n"
         print "       #{zookeeper_addr_array} contains #{zookeeper_addr_array.size} elements\n"
         exit 5
       end
@@ -214,6 +214,9 @@ if zookeeper_addr_array.size > 0
     # trigger the playbook runs for all of the nodes simultaneously using the
     # `site.yml` playbook
     zookeeper_addr_array.each do |machine_addr|
+      config.vm.provider "virtualbox" do |vb|
+        vb.memory = "256"
+      end
       config.vm.define machine_addr do |machine|
         # setup a private network for this machine
         machine.vm.network "private_network", ip: machine_addr

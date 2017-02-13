@@ -9,7 +9,7 @@ application: zookeeper
 zookeeper_distro: apache
 
 # the directory where the Zookeeper logs will be written
-zookeeper_log_dir: /var/lib
+zookeeper_data_dir: /var/lib
 
 # the interface Zookeeper should listen on when running
 zookeeper_iface: eth0
