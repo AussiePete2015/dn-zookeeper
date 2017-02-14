@@ -21,6 +21,11 @@
       dest: "{{zookeeper_config_dir}}/zoo.cfg"
       regexp: "^dataLogDir"
       line: "dataLogDir={{zookeeper_data_log_dir}}/zookeeper"
+  - name: Configure the maximum number of client connections
+    lineinfile:
+      dest: "{{zookeeper_config_dir}}/zoo.cfg"
+      regexp: "^(#)?maxClientCnxns="
+      line: "maxClientCnxns=256"
   - name: Ensure zookeeper data and log directories exist
     file:
       path: "{{item}}"
