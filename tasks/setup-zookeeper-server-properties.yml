@@ -16,18 +16,38 @@
       dest: "{{zookeeper_config_dir}}/zoo.cfg"
       regexp: "^dataDir"
       line: "dataDir={{data_dir_location}}/zookeeper"
-  - name: "Configure the maximum number of client connections"
+  - name: Configure zookeeper server to use the defined data log directory
     lineinfile:
       dest: "{{zookeeper_config_dir}}/zoo.cfg"
-      regexp: "^(#)?maxClientCnxns="
-      line: "maxClientCnxns=256"
-  - name: Create zookeeper working directory
+      regexp: "^dataLogDir"
+      line: "dataLogDir={{zookeeper_data_log_dir}}/zookeeper"
+  - name: Ensure zookeeper data and log directories exist
     file:
-      path: /var/lib/zookeeper
+      path: "{{item}}"
       state: directory
       owner: "{{zookeeper_user}}"
       group: "{{zookeeper_user}}"
+    with_items:
+      - "{{data_dir_location}}/zookeeper"
+      - "{{zookeeper_data_log_dir}}/zookeeper"
   become: true
+# if a set of JVM options were passed into the playbook run,
+# then use them to configure the JVM that will be used to run
+# our Zookeeper instance
+- block:
+  - name: Ensure that the java.env file exists
+    file:
+      path: "{{zookeeper_config_dir}}/java.env"
+      state: touch
+      owner: "{{zookeeper_user}}"
+      group: "{{zookeeper_user}}"
+  - name: Add configuration from jvm_flags variable to the java.env file
+    lineinfile:
+      dest: "{{zookeeper_config_dir}}/java.env"
+      regexp: "^export JVMFLAGS="
+      line: "export JVMFLAGS='{{jvm_flags}}'"
+  become: true
+  when: not (jvm_flags is undefined or jvm_flags is none or jvm_flags | trim == '')
 # if more than one zookeeper node was passed in, then setup
 # the zookeeper nodes we're provisioning as an ensemble
 - block:

@@ -10,7 +10,7 @@ User={{zookeeper_user}}
 Group={{zookeeper_user}}
 ExecStart={{zookeeper_bin_dir}}/zkServer.sh start
 ExecStop={{zookeeper_bin_dir}}/zkServer.sh stop
-WorkingDirectory=/var/lib/zookeeper
+WorkingDirectory={{zookeeper_data_log_dir}}/zookeeper
 
 [Install]
 WantedBy=multi-user.target
