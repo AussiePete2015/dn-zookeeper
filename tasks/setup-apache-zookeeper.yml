@@ -24,7 +24,7 @@
 # to a temporary directory and and unpack the Apache Zookeeper distribution from
 # that file
 - block:
-  - name: Copy confluent files from a local directory to /tmp
+  - name: Copy zookeeper files from a local directory to /tmp
     copy:
       src: "{{local_zk_file}}"
       dest: "/tmp"

@@ -5,9 +5,6 @@
 ---
 application: zookeeper
 
-# the distribution of Zookeeper that should be installed (apache, confluent, or lucidworks)
-zookeeper_distro: apache
-
 # the directory where the Zookeeper (in-memory) database snapshots will be written
 zookeeper_data_dir: /var/lib
 
@@ -28,7 +25,7 @@ zookeeper_version: "3.4.9"
 zookeeper_url: "https://www.apache.org/dist/zookeeper/zookeeper-{{zookeeper_version}}/zookeeper-{{zookeeper_version}}.tar.gz"
 zookeeper_dir: "/opt/zookeeper"
 
-# these parameters are used for both confluent and apache distributions
+# the packages that are needed for zookeeper
 zookeeper_package_list: ["java-1.8.0-openjdk", "java-1.8.0-openjdk-devel"]
 
 # used to set any JVM flags that should be used as part of the ZK configuration
