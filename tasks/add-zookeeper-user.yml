@@ -5,8 +5,6 @@
   group:
     name: "{{zookeeper_user}}"
     system: yes
-  tags:
-    - always
 - name: Create zookeeper user
   become: true
   user:
@@ -14,5 +12,3 @@
     group: "{{zookeeper_user}}"
     createhome: no
     system: yes
-  tags:
-    - always
