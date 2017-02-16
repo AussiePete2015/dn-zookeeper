@@ -118,16 +118,6 @@ if options[:local_zk_file] && !File.exists?(options[:local_zk_file])
   exit 3
 end
 
-if options[:node] && !(options[:node] =~ Resolv::IPv4::Regex)
-  print "ERROR; input node IP address #{options[:node]} is not a valid IP address\n"
-  exit 3
-end
-
-if options[:node] && options[:zookeeper_list]
-  print "ERROR; the node option and the zookeeper-list option cannot be combined\n"
-  exit 2
-end
-
 zookeeper_addr_array = []
 # if we're provisioning or an IP address is (or addresses are) required for this command,
 # then either the `--node` flag should be provided and only contain a single node or the
@@ -215,7 +205,7 @@ if zookeeper_addr_array.size > 0
     # `site.yml` playbook
     zookeeper_addr_array.each do |machine_addr|
       config.vm.provider "virtualbox" do |vb|
-        vb.memory = "256"
+        vb.memory = "2048"
       end
       config.vm.define machine_addr do |machine|
         # setup a private network for this machine
