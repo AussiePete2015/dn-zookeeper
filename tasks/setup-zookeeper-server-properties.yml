@@ -79,4 +79,5 @@
     with_indexed_items: "{{zookeeper_nodes | default([])}}"
     when: "'{{iface_addr}}' == '{{item.1}}'"
   become: true
+  become_user: zookeeper
   when: (zookeeper_nodes | default([])) != []
