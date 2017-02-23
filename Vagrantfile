@@ -81,6 +81,11 @@ optparse = OptionParser.new do |opts|
     options[:zookeeper_data_dir] = zookeeper_data_dir.gsub(/^=/,'')
   end
 
+  options[:reset_proxy_settings] = false
+  opts.on( '-c', '--clear-proxy-settings', 'Clear existing proxy settings if no proxy is set' ) do |reset_proxy_settings|
+    options[:reset_proxy_settings] = true
+  end
+
   opts.on_tail( '-h', '--help', 'Display this screen' ) do
     print opts
     exit
@@ -220,6 +225,9 @@ if zookeeper_addr_array.size > 0
             # list in a single playbook run
             ansible.limit = "all"
             ansible.playbook = "site.yml"
+            ansible.groups = {
+              zookeeper: zookeeper_addr_array
+            }
             ansible.extra_vars = {
               proxy_env: {
                 http_proxy: proxy,
@@ -230,7 +238,9 @@ if zookeeper_addr_array.size > 0
               zookeeper_iface: "eth1",
               yum_repo_addr: options[:yum_repo_addr],
               local_zk_file: options[:local_zk_file],
-              host_inventory: zookeeper_addr_array
+              host_inventory: zookeeper_addr_array,
+              reset_proxy_settings: options[:reset_proxy_settings],
+              inventory_type: "static"
             }
             # if a Zookeeper data directory was set, then set an extra variable
             # containing the named directory
@@ -246,12 +256,6 @@ if zookeeper_addr_array.size > 0
             # the command-line (eg. "/opt/zookeeper")
             if options[:zookeeper_path]
               ansible.extra_vars[:zookeeper_dir] = options[:zookeeper_path]
-            end
-            # if more than one zookeeper node was passed in, then pass the values
-            # in that hash value through as an extra variable (for use in configuring
-            # the zookeeper cluster and/or zookeeper cluster)
-            if zookeeper_addr_array.size > 1
-              ansible.extra_vars[:zookeeper_nodes] = zookeeper_addr_array
             end
           end     # end `machine.vm.provision "ansible" do |ansible|`
         end     # end `if machine_addr == zookeeper_addr_array[-1]`

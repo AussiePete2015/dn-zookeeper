@@ -2,4 +2,6 @@
 ---
 - name: Start zookeeper service
   become: true
-  command: systemctl start zookeeper.service
+  service:
+    name: zookeeper
+    state: restarted

@@ -3,6 +3,8 @@
 # copy sample configuration file over to new 'zoo.cfg' file
 # and configure our zookeeper instance to use the defined
 # data directory
+- set_fact:
+    num_hosts: "{{zookeeper_nodes | length}}"
 - block:
   - name: Copy example configuration file to new zoo.cfg file
     copy:
@@ -56,6 +58,8 @@
 # if more than one zookeeper node was passed in, then setup
 # the zookeeper nodes we're provisioning as an ensemble
 - block:
+  - set_fact:
+      zk_nodes: "{{zookeeper_nodes | map('extract', hostvars, [('ansible_' + zookeeper_iface), 'ipv4', 'address']) | list}}"
   - name: "Configure the zookeeper cluster timeouts"
     lineinfile:
       dest: "{{zookeeper_config_dir}}/zoo.cfg"
@@ -69,15 +73,15 @@
       dest: "{{zookeeper_config_dir}}/zoo.cfg"
       regexp: "^server.{{item.0}}"
       line: "server.{{item.0}}={{item.1}}:2888:3888"
-    with_indexed_items: "{{zookeeper_nodes | default([])}}"
+    with_indexed_items: "{{zk_nodes | default([])}}"
   - name: "Setup the 'myid' file for this zookeeper node"
     lineinfile:
       dest: "{{data_dir_location}}/zookeeper/myid"
       create: yes
       regexp: "^[0-9]"
       line: "{{item.0}}"
-    with_indexed_items: "{{zookeeper_nodes | default([])}}"
+    with_indexed_items: "{{zk_nodes | default([])}}"
     when: "'{{iface_addr}}' == '{{item.1}}'"
   become: true
   become_user: zookeeper
-  when: (zookeeper_nodes | default([])) != []
+  when: (num_hosts | int) > 1

@@ -39,3 +39,6 @@ jvm_flags: "-Xmx1g"
 
 # used to install Zookeeper from a file in a local directory (if it exists)
 local_zk_file: ""
+
+# path used to access private keys (defaults to the current working directory)
+private_key_path: "."
