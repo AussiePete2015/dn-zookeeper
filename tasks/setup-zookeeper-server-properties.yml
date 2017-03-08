@@ -81,7 +81,7 @@
       regexp: "^[0-9]"
       line: "{{item.0}}"
     with_indexed_items: "{{zk_nodes | default([])}}"
-    when: "'{{iface_addr}}' == '{{item.1}}'"
+    when: "'{{zookeeper_addr}}' == '{{item.1}}'"
   become: true
   become_user: zookeeper
   when: (num_hosts | int) > 1

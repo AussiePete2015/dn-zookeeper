@@ -239,7 +239,7 @@ if zookeeper_addr_array.size > 0
               local_zk_file: options[:local_zk_file],
               host_inventory: zookeeper_addr_array,
               reset_proxy_settings: options[:reset_proxy_settings],
-              inventory_type: "static"
+              cloud: "vagrant"
             }
             # if a Zookeeper data directory was set, then set an extra variable
             # containing the named directory
