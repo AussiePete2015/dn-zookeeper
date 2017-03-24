@@ -31,12 +31,6 @@ zookeeper_package_list: ["java-1.8.0-openjdk", "java-1.8.0-openjdk-devel"]
 # used to set any JVM flags that should be used as part of the ZK configuration
 jvm_flags: "-Xmx1g"
 
-# used to add extra repositories to the list of repositories in the
-# `local.repo` file that is deployed to a node when we're adding a
-# local repository to use in the provisioning process
-#local_repository_url: http://{{yum_repository}}/local.repo
-#local_repository_extra_keys: http://{{yum_repository}}/local-keys.json
-
 # used to install Zookeeper from a file in a local directory (if it exists)
 local_zk_file: ""
 
