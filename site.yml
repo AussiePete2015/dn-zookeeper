@@ -1,10 +1,17 @@
 # (c) 2016 DataNexus Inc.  All Rights Reserved
 ---
-# First, build our zookeeper host group
+# Build our zookeeper host group
 - name: Create zookeeper host group
   hosts: "{{host_inventory}}"
   gather_facts: no
   tasks:
+    # load the 'local variables file', if one was defined, to get any variables
+    # we might need from that file when constructing our host groups
+    - name: Load local variables file
+      include_vars:
+        file: "{{local_vars_file}}"
+      when: not (local_vars_file is undefined or local_vars_file is none or local_vars_file | trim == '')
+    # then, build our host groups
     - include_role:
         name: build-app-host-groups
       vars:
@@ -28,6 +35,15 @@
   vars:
     - combined_package_list: "{{ (default_packages|default([])) | union(zookeeper_package_list) | union((install_packages_by_tag|default({})).zookeeper|default([])) }}"
   pre_tasks:
+    # first, load the local variables file (if one was defined); this will initialize
+    # the variables used in our playbook (and override any values in the 'vars/zookeeper.yml'
+    # file with redefined values from the 'local_vars_file', if any)
+    - name: Load local variables file (if defined)
+      include_vars:
+        file: "{{local_vars_file}}"
+      when: not (local_vars_file is undefined or local_vars_file is none or local_vars_file | trim == '')
+    # then, restart the network (unless the skip_network_restart was set)
+    # and gather some facts about our Zookeeper node(s)
     - name: Ensure the network interfaces are up on our Zookeeper node(s)
       service:
         name: network
