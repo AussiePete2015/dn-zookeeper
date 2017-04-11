@@ -75,10 +75,17 @@ optparse = OptionParser.new do |opts|
   end
 
   options[:zookeeper_data_dir] = nil
-  opts.on( '-r', '--remote-data-dir LOG_DIR', 'Data directory for Zookeeper' ) do |zookeeper_data_dir|
+  opts.on( '-d', '--data DATA_DIR', 'Data directory for Zookeeper' ) do |zookeeper_data_dir|
     # while parsing, trim an '=' prefix character off the front of the string if it exists
     # (would occur if the value was passed using an option flag like '-r="/data"')
     options[:zookeeper_data_dir] = zookeeper_data_dir.gsub(/^=/,'')
+  end
+
+  options[:local_vars_file] = nil
+  opts.on( '-f', '--local-vars-file FILE', 'Local variables file' ) do |local_vars_file|
+    # while parsing, trim an '=' prefix character off the front of the string if it exists
+    # (would occur if the value was passed using an option flag like '-f=/tmp/local-vars-file.yml')
+    options[:local_vars_file] = local_vars_file.gsub(/^=/,'')
   end
 
   options[:reset_proxy_settings] = false
@@ -113,11 +120,19 @@ provisioning_command = !((ARGV & provisioning_command_args).empty?) && (ARGV & n
 # command being invoked
 single_ip_command = !((ARGV & single_ip_commands).empty?)
 
+# if a local variables file was passed in, check and make sure it's a valid filename
+if options[:local_vars_file] && !File.file?(options[:local_vars_file])
+  print "ERROR; input local variables file '#{options[:local_vars_file]}' is not a local file\n"
+  exit 3
+end
+
+# if a Zookeeeper URL was passed in, check to make sure it looks like a URI
 if options[:zookeeper_url] && !(options[:zookeeper_url] =~ URI::regexp)
   print "ERROR; input zookeeper URL '#{options[:zookeeper_url]}' is not a valid URL\n"
   exit 3
 end
 
+# if a local Zookeeper file was passed in, check to make sure it's a valid filename
 if options[:local_zk_file] && !File.exists?(options[:local_zk_file])
   print "ERROR; input local zookeeper file '#{options[:local_zk_file]}' is not a local file\n"
   exit 3
@@ -255,6 +270,11 @@ if zookeeper_addr_array.size > 0
             # the command-line (eg. "/opt/zookeeper")
             if options[:zookeeper_path]
               ansible.extra_vars[:zookeeper_dir] = options[:zookeeper_path]
+            end
+            # if defined, set the 'extra_vars[:local_vars_file]' value to the value that was passed in
+            # on the command-line (eg. "/tmp/local-vars-file.yml")
+            if options[:local_vars_file]
+              ansible.extra_vars[:local_vars_file] = options[:local_vars_file]
             end
           end     # end `machine.vm.provision "ansible" do |ansible|`
         end     # end `if machine_addr == zookeeper_addr_array[-1]`
