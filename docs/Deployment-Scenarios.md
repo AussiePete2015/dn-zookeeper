@@ -44,7 +44,7 @@ To deploy Zookeeper to the three nodes in our static inventory file and configur
 ```bash
 $ ansible-playbook -i test-cluster-inventory -e "{ \
       host_inventory: ['192.168.34.18', '192.168.34.19', '192.168.34.20'], \
-      cloud: vagrant, zookeeper_iface: eth0, \
+      inventory_type: static, data_iface: eth0, \
       zookeeper_url: 'apache-zookeeper/zookeeper-3.4.9.tar.gz', \
       yum_repo_url: 'http://192.168.34.254/centos', zookeeper_data_dir: '/data' \
     }" site.yml
@@ -53,8 +53,8 @@ $ ansible-playbook -i test-cluster-inventory -e "{ \
 Alternatively, rather than passing all of those arguments in on the command-line as extra variables, we can make use of the *local variables file* support that is built into this playbook and construct a YAML file that looks something like this containing the configuration parameters that are being used for this deployment:
 
 ```yaml
-cloud: vagrant
-zookeeper_iface: eth0
+inventory_type: static
+data_iface: eth0
 zookeeper_url: 'apache-zookeeper/zookeeper-3.4.9.tar.gz'
 yum_repo_url: 'http://192.168.34.254/centos'
 zookeeper_data_dir: '/data'
@@ -110,8 +110,8 @@ The `ansible-playbook` command used to deploy Zookeeper to target nodes in an Op
 $ ansible-playbook -i common-utils/inventory/osp/openstack -e "{ \
         host_inventory: 'meta-Application_zookeeper:&meta-Cloud_osp:&meta-Tenant_labs:&meta-Project_projectx:&meta-Domain_preprod', \
         application: zookeeper, cloud: osp, tenant: labs, project: projectx, domain: preprod, \
-        private_key_path: './keys', ansible_user: cloud-user, \
-        zookeeper_iface: eth0, zookeeper_data_dir: '/data' \
+        inventory_type: dynamic, private_key_path: './keys', ansible_user: cloud-user, \
+        data_iface: eth0, zookeeper_data_dir: '/data' \
     }" site.yml
 ```
 
@@ -121,8 +121,8 @@ In an AWS environment, the `ansible-playbook` command looks quite similar:
 $ ansible-playbook -i common-utils/inventory/aws/ec2 -e "{ \
         host_inventory: 'tag_Application_zookeeper:&tag_Cloud_aws:&tag_Tenant_labs:&tag_Project_projectx:&tag_Domain_preprod', \
         application: zookeeper, cloud: osp, tenant: labs, project: projectx, domain: preprod, \
-        private_key_path: './keys', ansible_user: cloud-user, \
-        zookeeper_iface: eth0, zookeeper_data_dir: '/data' \
+        inventory_type: dynamic, private_key_path: './keys', ansible_user: cloud-user, \
+        data_iface: eth0, zookeeper_data_dir: '/data' \
     }" site.yml
 ```
 

@@ -17,18 +17,18 @@
       vars:
         host_group_list:
           - name: zookeeper
-      when: cloud == 'aws' or cloud == 'osp'
+      when: inventory_type == 'dynamic'
     - include_role:
         name: build-app-host-groups
       vars:
         host_group_list:
           - { name: zookeeper, node_list: "{{host_inventory}}" }
-      when: cloud == "vagrant"
+      when: inventory_type == 'static'
 
 # Then, deploy Zookeeper to the nodes in the zookeeper host group that was passed in (if there
 # is more than one node passed in, those nodes will be configured as a single Zookeeper cluster)
 - name: Install/configure servers (zookeeper)
-  hosts: zookeeper
+  hosts: zookeeper:&zookeeper_nodes
   gather_facts: no
   vars_files:
     - vars/zookeeper.yml
@@ -76,8 +76,8 @@
   # deploy and configure Zookeeper
   roles:
     - role: get-iface-addr
-      iface_name: "{{zookeeper_iface}}"
-      as_fact: "zookeeper_addr"
+      iface_name: "{{data_iface}}"
+      as_fact: "data_addr"
     - role: setup-web-proxy
     - role: add-local-repository
       yum_repository: "{{yum_repo_url}}"
