@@ -249,12 +249,12 @@ if zookeeper_addr_array.size > 0
                 proxy_username: proxy_username,
                 proxy_password: proxy_password
               },
-              zookeeper_iface: "eth1",
+              data_iface: "eth1",
               yum_repo_url: options[:yum_repo_url],
               local_zk_file: options[:local_zk_file],
               host_inventory: zookeeper_addr_array,
               reset_proxy_settings: options[:reset_proxy_settings],
-              cloud: "vagrant"
+              inventory_type: "static"
             }
             # if a Zookeeper data directory was set, then set an extra variable
             # containing the named directory

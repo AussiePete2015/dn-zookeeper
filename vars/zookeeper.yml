@@ -12,7 +12,7 @@ zookeeper_data_dir: /var/lib
 zookeeper_data_log_dir: /var/log
 
 # the interface Zookeeper should listen on when running
-zookeeper_iface: eth0
+data_iface: eth0
 
 # the user that the zookeeper service should run under
 zookeeper_user: zookeeper

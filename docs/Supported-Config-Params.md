@@ -17,7 +17,8 @@ The following parameters can be used to control the `ansible-playbook` run itsel
 * **`zookeeper_url`**: the URL that the Zookeeper distribution should be downloaded from
 * **`local_zk_file`**: the local file (to the Ansible host) containing the Zookeeper distribution; this file will be uploaded to the target hosts and unpacked into the `zookeeper_dir` (see below) during the playbook run
 * **`zookeeper_version`**: the version of Zookeeper that should be downloaded; used to switch versions when the distribution is downloaded using the default `zookeeper_url`, which is defined in the [vars/zookeeper.yml](../vars/zookeeper.yml) file
-* **`cloud`**: the name of the cloud type being targeted (`aws`, `osp`, or `vagrant`); this controls whether the inventory information for the playbook run is assumed to be passed in dynamically (when the cloud is `aws` or `osp`) or statically (if the cloud type is `vagrant`)
+* **`inventory_type`**: how the inventory is being managed (either 'static' or 'dynamic')
+* **`cloud`**: if the inventory is being managed dynamically, this parameter is used to indicate the type of target cloud for the deployment (either `aws` or `osp`); this controls how the [build-app-host-groups](../common-roles/build-app-host-groups) common role retrieves the list of target nodes for the deployment
 * **`host_inventory`**: used to pass in a list of the nodes targeted for deployment (in the static inventory use case) or a union of the application, tenant, project, and domain tags (in the dynamic inventory use case)
 * **`local_vars_file`**: used to define the location of a *local variables file* (see the discussion of this topic, below); this file is a YAML file containing definitions for any of the configuration parameters that are described in this section and is more than likely a file that will be created to manage the process of creating a specific ensemble. Storing the settings for a given ensemble in such a file makes it easy to guarantee that all of the nodes in that ensemble are configured consistently
 * **`private_key_path`**: used to define the directory where the private keys are maintained when the inventory for the playbook run is being managed dynamically; in these cases, the scripts used to retrieve the dynamic inventory information will return the names of the keys that should be used to access each node, and the playbook will search the directory specified by this parameter to find the corresponding key files. If this value is not specified then the current working directory will be searched for those keys by default
@@ -35,14 +36,14 @@ These parameters are used to control the deployment process itself, defining thi
 ## Parameters used to configure the Zookeeper nodes
 These parameters are used configure the Zookeeper nodes themselves during a playbook run, defining things like the interface that Zookeeper should listen on for requests, the directory where Zookeper should store its data and logs, and the JVM flags that should be used when running Zookeeper:
 
-* **`zookeeper_iface`**: the name of the interface that the Zookeeper nodes should use when talking with each other and handling user requests. An interface of this name must exist for the playbook to run successfully, and if unspecified a value of `eth0` is assumed
-* **`iface_description_array`**: this parameter can be used in place of the `zookeeper_iface ` parameter described above; provides users with the ability to specify a description for this interface rather than identifying the interface by name (more on this, below)
+* **`data_iface`**: the name of the interface that the Zookeeper nodes should use when talking with each other and handling user requests. An interface of this name must exist for the playbook to run successfully, and if unspecified a value of `eth0` is assumed
+* **`iface_description_array`**: this parameter can be used in place of the `data_iface ` parameter described above; provides users with the ability to specify a description for this interface rather than identifying the interface by name (more on this, below)
 * **`zookeeper_data_dir`**: the name of the directory where Zookeeper should use to store its data; defaults to `/var/lib` if unspecified. If necessary, this directory will be created as part of the playbook run
 * **`zookeeper_data_log_dir`**: the name of the directory where Zookeeper should store it's transaction logs; defaults to `/var/log` if unspecified. If necessary, this directory will be created as part of the playbook run
 * **`jvm_flags`**: used to set any JVM flags that should be used as part of the Zookeeper configuration; defaults to `-Xmx1g` if inspecified
 
 ## Interface names vs. interface descriptions
-For some operating systems on some platforms, it can be difficult (if not impossible) to determine the names of the interface that should be passed into the playbook using the `zookeeper_iface` parameter that was described, above. In those situations, the playbook in this repository provides an alternative; specifying those interfaces using the `iface_description_array` parameter instead.
+For some operating systems on some platforms, it can be difficult (if not impossible) to determine the names of the interface that should be passed into the playbook using the `data_iface` parameter that was described, above. In those situations, the playbook in this repository provides an alternative; specifying those interfaces using the `iface_description_array` parameter instead.
 
 Put quite simply, the `iface_description_array` lets you specify a description for each of the networks that you are interested in, then retrieve the names of those networks on each machine in a variable that can be used elsewhere in the playbook. To accomplish this, the `iface_description_array` is defined as an array of hashes (one per interface), each of which include the following fields:
 
@@ -54,10 +55,10 @@ With these values in hand, the playbook will search the available networks on ea
 
 ```json
     iface_description_array: [
-        { as_var: 'zookeeper_iface', type: 'cidr', val: '192.168.34.0/24' },
+        { as_var: 'data_iface', type: 'cidr', val: '192.168.34.0/24' },
     ]
 ```
 
-the playbook will return the name of the network that matches the CIDR `192.168.34.0/24` as the value of the `zookeeper_iface` fact. This fact can then be used later in the playbook to correctly configure the Zookeeper nodes to talk to each other and listen on the proper interface for user requests.
+the playbook will return the name of the network that matches the CIDR `192.168.34.0/24` as the value of the `data_iface` fact. This fact can then be used later in the playbook to correctly configure the Zookeeper nodes to talk to each other and listen on the proper interface for user requests.
 
-It should be noted that if you choose to take this approach when constructing your `ansible-playbook` runs, a matching entry in the `iface_description_array` must be specified for the `zookeeper_iface` network, otherwise the default value of `eth0` will be used for this fact (and the playbook run may result in nodes that are at best misconfigured; if the `eth0` network does not exist then the playbook will fail to run altogether).
+It should be noted that if you choose to take this approach when constructing your `ansible-playbook` runs, a matching entry in the `iface_description_array` must be specified for the `data_iface` network, otherwise the default value of `eth0` will be used for this fact (and the playbook run may result in nodes that are at best misconfigured; if the `eth0` network does not exist then the playbook will fail to run altogether).

@@ -59,7 +59,7 @@
 # the zookeeper nodes we're provisioning as an ensemble
 - block:
   - set_fact:
-      zk_nodes: "{{zookeeper_nodes | map('extract', hostvars, [('ansible_' + zookeeper_iface), 'ipv4', 'address']) | list}}"
+      zk_nodes: "{{zookeeper_nodes | map('extract', hostvars, [('ansible_' + data_iface), 'ipv4', 'address']) | list}}"
   - name: "Configure the zookeeper cluster timeouts"
     lineinfile:
       dest: "{{zookeeper_config_dir}}/zoo.cfg"
@@ -81,7 +81,7 @@
       regexp: "^[0-9]"
       line: "{{item.0}}"
     with_indexed_items: "{{zk_nodes | default([])}}"
-    when: "'{{zookeeper_addr}}' == '{{item.1}}'"
+    when: "'{{data_addr}}' == '{{item.1}}'"
   become: true
   become_user: zookeeper
   when: (num_hosts | int) > 1
