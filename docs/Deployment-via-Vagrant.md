@@ -43,7 +43,7 @@ $
 So, to recap, by using a single `vagrant ... up` command we were able to quickly spin up an ensemble consisting of of three Zookeeper nodes, and a similar `vagrant ... up` command could be used to build a similar Zookeeper ensemble consisting of any number of nodes.
 
 ## Separating instance creation from provisioning
-While the `vagrant up` commands that are shown above can be used to easily deploy Zookeeper to a single node or to build a Zookeeper ensemble consisting of multiple nodes, the [Vagrantfile](../Vagrantfile) included in this distribution also supports separating out the creation of the virtual machine from the provisioning of that virtual machine using the Ansible playbook contained in this repository's [site.yml](../site.yml) file.
+While the `vagrant up` commands that are shown above can be used to easily deploy Zookeeper to a single node or to build a Zookeeper ensemble consisting of multiple nodes, the [Vagrantfile](../Vagrantfile) included in this distribution also supports separating out the creation of the virtual machine from the provisioning of that virtual machine using the Ansible playbook contained in this repository's [provision-zookeeper.yml](../provision-zookeeper.yml) file.
 
 To create a set of virtual machines that we plan on using to build a Zookeeper ensemble without provisioning Zookeeper to those machines, simply run a command similar to the following:
 
@@ -59,7 +59,7 @@ To provision the machines that were created above and configure those machines a
 $ vagrant "192.168.34.18,192.168.34.19,192.168.34.20" provision
 ```
 
-That command will attach to the named instances and run the playbook in this repository's [site.yml](../site.yml) file on those node, resulting in a Zookeeper ensemble consisting of the nodes that were created in the `vagrant ... up --no-provision` command that was shown, above.
+That command will attach to the named instances and run the playbook in this repository's [provision-zookeeper.yml](../provision-zookeeper.yml) file on those node, resulting in a Zookeeper ensemble consisting of the nodes that were created in the `vagrant ... up --no-provision` command that was shown, above.
 
 ## Additional vagrant deployment options
 While the commands shown above will install Zookeeper with a reasonable, default configuration from a standard location, there are additional command-line parameters that can be used to override the default values that are embedded in the [vars/zookeeper.yml](../vars/zookeeper.yml) file. Here is a complete list of the command-line flags that can be included in any `vagrant ... up` or `vagrant ... provision` command:

@@ -12,13 +12,16 @@ $ cat single-node-inventory
 
 192.168.34.12 ansible_ssh_user='cloud-user' ansible_ssh_private_key_file='keys/test_node_private_key'
 
+[zookeeper]
+192.168.34.12
+
 $ 
 ```
 
 Note that in this example inventory file the `ansible_ssh_host` and `ansible_ssh_port` will take their default values since they aren't specified for our host in this very simple static inventory file. Once we've built our static inventory file, we can then deploy Zookeeper to our single node by running an `ansible-playbook` command that looks something like this:
 
 ```bash
-$ ansible-playbook -i single-node-inventory -e "{ host_inventory: ['192.168.34.12'] }" site.yml
+$ ansible-playbook -i single-node-inventory provision-zookeeper.yml
 ```
 
 This will download the Apache Zookeeper distribution file from the default download server defined in the [vars/zookeeper.yml](../vars/zookeeper.yml) file, unpack that gzipped tarfile into the `/opt/apache-zookeeper` directory on that host, and configure that node as a single-node Zookeeper deployment, using the default configuration parameters that are defined in the [vars/zookeeper.yml](../vars/zookeeper.yml) file.
@@ -36,6 +39,11 @@ $ cat test-cluster-inventory
 192.168.34.19 ansible_ssh_host= 192.168.34.19 ansible_ssh_port=22 ansible_ssh_user='cloud-user' ansible_ssh_private_key_file='keys/zk_cluster_private_key'
 192.168.34.20 ansible_ssh_host= 192.168.34.20 ansible_ssh_port=22 ansible_ssh_user='cloud-user' ansible_ssh_private_key_file='keys/zk_cluster_private_key'
 
+[zookeeper]
+192.168.34.18
+192.168.34.19
+192.168.34.20
+
 $
 ```
 
@@ -43,11 +51,10 @@ To deploy Zookeeper to the three nodes in our static inventory file and configur
 
 ```bash
 $ ansible-playbook -i test-cluster-inventory -e "{ \
-      host_inventory: ['192.168.34.18', '192.168.34.19', '192.168.34.20'], \
-      inventory_type: static, data_iface: eth0, \
+      data_iface: eth0, zookeeper_data_dir: '/data', \
       zookeeper_url: 'apache-zookeeper/zookeeper-3.4.9.tar.gz', \
-      yum_repo_url: 'http://192.168.34.254/centos', zookeeper_data_dir: '/data' \
-    }" site.yml
+      yum_repo_url: 'http://192.168.34.254/centos' \
+    }" provision-zookeeper.yml
 ```
 
 Alternatively, rather than passing all of those arguments in on the command-line as extra variables, we can make use of the *local variables file* support that is built into this playbook and construct a YAML file that looks something like this containing the configuration parameters that are being used for this deployment:
@@ -64,10 +71,19 @@ and then we can pass in the *local variables file* as an argument to the `ansibl
 
 ```bash
 $ ansible-playbook -i test-cluster-inventory -e "{ \
-      host_inventory: ['192.168.34.18', '192.168.34.19', '192.168.34.20'], \
       local_vars_file: 'test-cluster-deployment-params.yml' \
-    }" site.yml
+    }" provision-zookeeper.yml
 ```
+
+As an aside, it should be noted here that the [provision-zookeeper.yml](../provision-zookeeper.yml) playbook includes a [shebang](https://en.wikipedia.org/wiki/Shebang_(Unix)) line at the beginning of the playbook file. As such, the playbook can be executed directly as a shell script (rather than using the file as the final input to an `ansible-playbook` command). This means that the command that was shown above could also be run as:
+
+```bash
+$ ./provision-zookeeper.yml -i test-cluster-inventory -e "{ \
+      local_vars_file: 'test-cluster-deployment-params.yml' \
+    }"
+```
+
+This form is available as a replacement for any of the `ansible-playbook` commands that we show here; which form you use will likely be a matter of personal preference (since both accomplish the same thing).
 
 Once that playbook run is complete, we can run the `zkServer.sh status` command on each of the nodes in our ensemble. This will show whether Zookeeper is running or not on each node and whether it is acting as a leader or follower:
 
@@ -107,24 +123,24 @@ In terms of what the commands look like, lets assume for this example that we've
 The `ansible-playbook` command used to deploy Zookeeper to target nodes in an OpenStack environment would then look something like this:
 
 ```bash
-$ ansible-playbook -i common-utils/inventory/osp/openstack -e "{ \
-        host_inventory: 'meta-Application_zookeeper:&meta-Cloud_osp:&meta-Tenant_labs:&meta-Project_projectx:&meta-Domain_preprod', \
-        application: zookeeper, cloud: osp, tenant: labs, project: projectx, domain: preprod, \
-        inventory_type: dynamic, private_key_path: './keys', ansible_user: cloud-user, \
-        data_iface: eth0, zookeeper_data_dir: '/data' \
-    }" site.yml
+$ ansible-playbook -e "{ \
+        application: zookeeper, cloud: osp, \
+        tenant: labs, project: projectx, domain: preprod, \
+        private_key_path: './keys', data_iface: eth0, \
+        zookeeper_data_dir: '/data' \
+    }" provision-zookeeper.yml
 ```
 
 In an AWS environment, the `ansible-playbook` command looks quite similar:
 
 ```bash
-$ ansible-playbook -i common-utils/inventory/aws/ec2 -e "{ \
-        host_inventory: 'tag_Application_zookeeper:&tag_Cloud_aws:&tag_Tenant_labs:&tag_Project_projectx:&tag_Domain_preprod', \
-        application: zookeeper, cloud: osp, tenant: labs, project: projectx, domain: preprod, \
-        inventory_type: dynamic, private_key_path: './keys', ansible_user: cloud-user, \
-        data_iface: eth0, zookeeper_data_dir: '/data' \
-    }" site.yml
+$ AWS_PROFILE=datanexus_west ansible-playbook -e "{ \
+        application: zookeeper, cloud: aws, \
+        tenant: labs, project: projectx, domain: preprod, \
+        private_key_path: './keys', data_iface: eth0, \
+        zookeeper_data_dir: '/data' \
+    }" provision-zookeeper.yml
 ```
 
-As you can see, it's basically the same commands that was shown for the OpenStack use case; they only differ in terms of the name of the inventory script passed in using the `-i, --inventory-file` command-line argument, the value passed in for `Cloud` tag (and the value for the associated `cloud` variable), and the prefix used when specifying the tags that should be matched in the `host_inventory` value (`tag_` instead of `meta-`). In both cases the result would be a set of nodes deployed as a Zookeeper ensemble, with the number of nodes in the ensemble determined (completely) by the tags that were assigned to them.
+As you can see, these two commands only in terms of the environment variable defined at the beginning of the command-line used to provision to the AWS environment (`AWS_PROFILE=datanexus_west`) and the value defined for the `cloud` variable (`osp` versus `aws`). In both cases the result would be a set of nodes deployed as a Zookeeper ensemble. The number of nodes in the ensemble will be determined (completely) by the number of nodes in the OpenStack or AWS environment that have been tagged with a matching set of `application`, `tenant`, `project` and `domain` tags.
 
