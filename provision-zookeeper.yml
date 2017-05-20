@@ -1,43 +1,46 @@
+#!/usr/bin/env ansible-playbook
+#
 # (c) 2016 DataNexus Inc.  All Rights Reserved
 ---
 # Build our zookeeper host group
 - name: Create zookeeper host group
-  hosts: "{{host_inventory}}"
+  hosts: localhost
   gather_facts: no
   tasks:
-    # load the 'local variables file', if one was defined, to get any variables
-    # we might need from that file when constructing our host groups
-    - name: Load local variables file
-      include_vars:
-        file: "{{local_vars_file}}"
-      when: not (local_vars_file is undefined or local_vars_file is none or local_vars_file | trim == '')
-    # then, build our host groups
-    - include_role:
-        name: build-app-host-groups
-      vars:
-        host_group_list:
-          - name: zookeeper
-      when: inventory_type == 'dynamic'
-    - include_role:
-        name: build-app-host-groups
-      vars:
-        host_group_list:
-          - { name: zookeeper, node_list: "{{host_inventory}}" }
-      when: inventory_type == 'static'
+    # if we're using dynamic provisioning; build the host groups from the
+    # meta-data associated with the matching nodes in the selected cloud
+    - block:
+      # load the 'local variables file', if one was defined, to get any
+      # variables we might need from that file when constructing our host
+      # groups
+      - name: Load local variables file
+        include_vars:
+          file: "{{local_vars_file}}"
+        when: not (local_vars_file is undefined or local_vars_file is none or local_vars_file | trim == '')
+      # then, build our host groups
+      - include_role:
+          name: build-app-host-groups
+        vars:
+          host_group_list:
+            - name: zookeeper
+      when: cloud is defined and (cloud == 'aws' or cloud == 'osp')
 
-# Then, deploy Zookeeper to the nodes in the zookeeper host group that was passed in (if there
-# is more than one node passed in, those nodes will be configured as a single Zookeeper cluster)
+# Then, deploy Zookeeper to the nodes in the zookeeper host group that was
+# passed in (if there is more than one node passed in, those nodes will be
+# configured as a single Zookeeper cluster)
 - name: Install/configure servers (zookeeper)
-  hosts: zookeeper:&zookeeper_nodes
+  hosts: zookeeper
   gather_facts: no
   vars_files:
     - vars/zookeeper.yml
   vars:
     - combined_package_list: "{{ (default_packages|default([])) | union(zookeeper_package_list) | union((install_packages_by_tag|default({})).zookeeper|default([])) }}"
+    - zookeeper_nodes: "{{groups['zookeeper']}}"
   pre_tasks:
-    # first, load the local variables file (if one was defined); this will initialize
-    # the variables used in our playbook (and override any values in the 'vars/zookeeper.yml'
-    # file with redefined values from the 'local_vars_file', if any)
+    # first, load the local variables file (if one was defined); this will
+    # initialize the variables used in our playbook (and override any values
+    # in the 'vars/zookeeper.yml' file with redefined values from the
+    # 'local_vars_file', if any)
     - name: Load local variables file (if defined)
       include_vars:
         file: "{{local_vars_file}}"
@@ -52,8 +55,8 @@
       when: not (skip_network_restart is defined or skip_network_restart)
     - name: Gather facts from the Zookeeper node(s)
       setup:
-    # next, we obtain the interface names for our data_iface
-    # and api_iface (provided an interface description was provided for each)
+    # next, we obtain the interface names for our data_iface and api_iface
+    # (provided an interface description was provided for each)
     - include_role:
         name: get-iface-names
       vars:
@@ -72,8 +75,8 @@
         become: true
         when: rhel_username is defined and rhel_password is defined and rhel_consumer_id is defined
       when: ansible_distribution == 'RedHat'
-  # Now that we have all of the facts we need, we can run the roles that are used to
-  # deploy and configure Zookeeper
+  # Now that we have all of the facts we need, we can run the roles that are
+  # used to deploy and configure Zookeeper
   roles:
     - role: get-iface-addr
       iface_name: "{{data_iface}}"

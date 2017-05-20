@@ -221,24 +221,27 @@ if zookeeper_addr_array.size > 0
     # creating VMs, create a VM for each machine; if we're just provisioning the
     # VMs using an ansible playbook, then wait until the last VM in the loop and
     # trigger the playbook runs for all of the nodes simultaneously using the
-    # `site.yml` playbook
+    # `provision-zookeeper.yml` playbook
     zookeeper_addr_array.each do |machine_addr|
       config.vm.provider "virtualbox" do |vb|
         vb.memory = "2048"
       end
       config.vm.define machine_addr do |machine|
+        # disable the default synced folder
+        machine.vm.synced_folder ".", "/vagrant", disabled: true
         # setup a private network for this machine
         machine.vm.network "private_network", ip: machine_addr
         # if it's the last node in the list if input addresses, then provision
         # all of the nodes sumultaneously (if the `--no-provision` flag was not
         # set, of course)
         if machine_addr == zookeeper_addr_array[-1]
-          # use the playbook in the `site.yml' file to provision Zookeeper to our nodes
+          # use the playbook in the `provision-zookeeper.yml' file to
+          # provision Zookeeper to our nodes
           machine.vm.provision "ansible" do |ansible|
             # set the limit to 'all' in order to provision all of machines on the
             # list in a single playbook run
             ansible.limit = "all"
-            ansible.playbook = "site.yml"
+            ansible.playbook = "provision-zookeeper.yml"
             ansible.groups = {
               zookeeper: zookeeper_addr_array
             }
@@ -250,12 +253,18 @@ if zookeeper_addr_array.size > 0
                 proxy_password: proxy_password
               },
               data_iface: "eth1",
-              yum_repo_url: options[:yum_repo_url],
               local_zk_file: options[:local_zk_file],
-              host_inventory: zookeeper_addr_array,
-              reset_proxy_settings: options[:reset_proxy_settings],
-              inventory_type: "static"
             }
+            # if a local yum repositiory  was set, then set an extra variable
+            # containing the named repository
+            if options[:yum_repo_url]
+              ansible.extra_vars[:yum_repo_url] = options[:yum_repo_url]
+            end
+            # if the flag to reset the proxy settings was set, then set an extra variable
+            # containing that value
+            if options[:reset_proxy_settings]
+              ansible.extra_vars[:reset_proxy_settings] = options[:reset_proxy_settings]
+            end
             # if a Zookeeper data directory was set, then set an extra variable
             # containing the named directory
             if options[:zookeeper_data_dir]
