@@ -27,7 +27,7 @@
 
 # Then, deploy Zookeeper to the nodes in the zookeeper host group that was
 # passed in (if there is more than one node passed in, those nodes will be
-# configured as a single Zookeeper cluster)
+# configured as a single Zookeeper ensemble)
 - name: Install/configure servers (zookeeper)
   hosts: zookeeper
   gather_facts: no
@@ -42,5 +42,23 @@
     # and determining the `data_iface` and `api_iface` values from the input
     # `iface_description_array` (if one was passed in)
     - role: initialize-play
-    # now that we have all of the facts we need, provision the input nodes
-    - role: provision-nodes
+    # deploy Zookeeper to our new nodes, leaving the zookeeper service stopped
+    # on those nodes
+    - role: add-nodes
+      start_zookeeper: false
+    # ensure that the list of `data_iface` addresses for the new Zookeeper
+    # nodes we're adding to the cluster is available as a fact for all of our
+    # ensemble nodes
+    - role: get-zk-nodes
+    # determine the ensemble ID and role for each of the existing nodes in the
+    # ensemble for each of the existing nodes; this role will also setup lists
+    # containing the `follower_nodes` and `leader_node` based on these roles
+    - role: get-ensemble-role-and-id
+      when: inventory_hostname in existing_nodes
+    # reconfigure the existing and new ensemble nodes to include both the
+    # current nodes and nodes we are adding in their configuration
+    - role: reconfigure-ensemble-nodes
+    # restart the follower nodes, then the leader node, then the nodes we're
+    # adding to the ensemble
+    - role: rolling-restart
+      target_nodes: "{{follower_nodes + leader_node + zookeeper_nodes}}"

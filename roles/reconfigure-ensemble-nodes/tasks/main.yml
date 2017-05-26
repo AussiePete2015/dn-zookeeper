@@ -1,0 +1,18 @@
+# (c) 2016 DataNexus Inc.  All Rights Reserved
+---
+- block:
+  - name: "Ensure existing zookeeper node addresses are in configuration file"
+    lineinfile:
+      dest: "{{zookeeper_dir}}/conf/zoo.cfg"
+      regexp: "^server.{{hostvars[item.1]['ensemble_id'] | default(item.0)}}"
+      line: "server.{{hostvars[item.1]['ensemble_id'] | default(item.0)}}={{item.1}}:2888:3888"
+      insertbefore: "^server.{{existing_node_count | default('0')}}"
+    with_indexed_items: "{{existing_nodes | default([])}}"
+  - name: "Ensure new zookeeper node addresses are in configuration file"
+    lineinfile:
+      dest: "{{zookeeper_dir}}/conf/zoo.cfg"
+      regexp: "^server.{{item.0 + ((existing_node_count | default('0')) | int)}}"
+      line: "server.{{item.0 + ((existing_node_count | default('0')) | int)}}={{item.1}}:2888:3888"
+    with_indexed_items: "{{zk_nodes | default([])}}"
+  become: true
+  become_user: zookeeper

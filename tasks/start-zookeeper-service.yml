@@ -5,3 +5,4 @@
   service:
     name: zookeeper
     state: restarted
+  when: (start_zookeeper | default(true)) | bool

@@ -157,7 +157,7 @@ if provisioning_command || ip_required
         print "ERROR; input zookeeper IP address #{zookeeper_addr_array[0]} is not a valid IP address\n"
         exit 2
       end
-    elsif !single_ip_command
+    elsif provisioning_command && !single_ip_command
       # when provisioning a multi-node Zookeeper ensemble, we **must** have a zookeeper cluster
       # consisting of an odd number of nodes greater than three, but less than seven (any other
       # topology is not supported, so an error is thrown)
