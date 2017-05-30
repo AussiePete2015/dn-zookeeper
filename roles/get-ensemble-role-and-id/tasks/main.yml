@@ -1,0 +1,29 @@
+# (c) 2016 DataNexus Inc.  All Rights Reserved
+---
+# retrieve the role of the node, it's ID, and set a couple of facts
+# containing the list of follower nodes and the leader node
+- set_fact:
+    follower_nodes: []
+    leader_node: []
+- name: Get role of node in current ensemble
+  shell: "{{zookeeper_dir}}/bin/zkServer.sh status 2> /dev/null | awk '{print $2}'"
+  register: command_result
+- set_fact:
+    cluster_role: "{{command_result.stdout}}"
+- name: Get ID of node in current ensemble
+  shell: "cat {{zookeeper_data_dir}}/zookeeper/myid 2> /dev/null | awk '{print $1}'"
+  register: command_result
+- set_fact:
+    ensemble_id: "{{command_result.stdout}}"
+- name: Build list of follower nodes
+  set_fact:
+    follower_nodes: "{{follower_nodes}} + [ '{{item}}' ]"
+  with_items: "{{existing_nodes}}"
+  when: (hostvars[item]['cluster_role'] | default('')) == 'follower'
+  run_once: true
+- name: Build list containing the leader node
+  set_fact:
+    leader_node: "{{leader_node}} + [ '{{item}}' ]"
+  with_items: "{{existing_nodes}}"
+  when: (hostvars[item]['cluster_role'] | default('')) == 'leader'
+  run_once: true

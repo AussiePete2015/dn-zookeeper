@@ -1,0 +1,6 @@
+# (c) 2016 DataNexus Inc.  All Rights Reserved
+---
+# ensure that the `zk_nodes` fact is set based on new nodes we're adding
+# (for the existing nodes, they will not have been set yet)
+- set_fact:
+    zk_nodes: "{{zookeeper_nodes | map('extract', hostvars, [('ansible_' + data_iface), 'ipv4', 'address']) | list}}"
