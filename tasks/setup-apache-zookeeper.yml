@@ -15,7 +15,7 @@
       dest: /tmp
       mode: 0644
       validate_certs: no
-    environment: "{{environment_vars}}"
+    environment: "{{environment_vars | default({})}}"
   - set_fact:
       local_filename: "{{zookeeper_url | basename}}"
   when: not(install_from_dir)
@@ -53,14 +53,10 @@
 # Now that we've installed the packages that we need, setup the appropriate `log`
 # directory for Zookeeper and finish by setting up some facts that we'll need later
 # in our playbook
-- set_fact: data_dir_location="/var/lib"
-- name: Set fact for the data directory location
-  set_fact: data_dir_location="{{zookeeper_data_dir}}"
-  when: not (zookeeper_data_dir is undefined or zookeeper_data_dir is none or zookeeper_data_dir | trim == '')
 - name: Ensure zookeeper data directory exists
   become: true
   file:
-    path: "{{data_dir_location}}/zookeeper"
+    path: "{{zookeeper_data_dir | default('/var/lib')}}/zookeeper"
     state: directory
     owner: "{{zookeeper_user}}"
     group: "{{zookeeper_user}}"
